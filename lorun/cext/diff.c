@@ -56,13 +56,13 @@ int checkDiff(int rightout_fd, int userout_fd, int *result) {
 
     if ((userout = (char*) mmap(NULL, userout_len, PROT_READ | PROT_WRITE,
             MAP_PRIVATE, userout_fd, 0)) == MAP_FAILED) {
-        RAISE1("mmap userout filure");
+        RAISE1("mmap userout failure");
     }
 
     if ((rightout = (char*) mmap(NULL, rightout_len, PROT_READ | PROT_WRITE,
             MAP_PRIVATE, rightout_fd, 0)) == MAP_FAILED) {
         munmap(userout, userout_len);
-        RAISE1("mmap right filure");
+        RAISE1("mmap right failure");
     }
 
     if ((userout_len == rightout_len) && equalStr(userout, rightout) == 0) {

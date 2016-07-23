@@ -72,7 +72,7 @@ int initRun(struct Runobj *runobj, PyObject *args)
             if((runobj->files = PyDict_GetItemString(config, "files")) == NULL)
                 RAISE1("trace == True, so you must specify files.");
             if(!PyDict_Check(runobj->files))
-                RAISE1("files must be a dcit.");
+                RAISE1("files must be a dict.");
         } else runobj->trace = 0;
     } else runobj->trace = 0;
     

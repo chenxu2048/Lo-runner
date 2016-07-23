@@ -30,13 +30,27 @@ int fileAccess(PyObject *files, const char *file, long flags) {
         return 0;
     }
     //printf("%s:%d\n",file,flags);
-    #ifdef IS_PY3
-    perm = PyLong_AsLong(perm_obj);
-    #else
-    perm = PyInt_AsLong(perm_obj);
-    #endif
-    if (perm == flags)
-        return 1;
+    // check if the value is a list
+    if (PyList_Check(perm_obj)) {
+        Py_ssize_t i, size = Py_SIZE(perm_obj);
+        for (i = 0; i < size; ++i) {
+            #ifdef IS_PY3
+            perm = PyLong_AsLong(PyList_GetItem(perm_obj, i));
+            #else
+            perm = PyLong_AsLong(PyList_GetItem(perm_obj, i));
+            #endif
+            if (perm == flags)
+                return 1;
+        }
+    } else {
+        #ifdef IS_PY3
+        perm = PyLong_AsLong(perm_obj);
+        #else
+        perm = PyInt_AsLong(perm_obj);
+        #endif
+        if (perm == flags)
+            return 1;
+    }
 
     return 0;
 }
