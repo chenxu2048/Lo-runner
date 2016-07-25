@@ -47,6 +47,7 @@ struct Result {
 
 struct Runobj {
     PyObject *files;
+    PyObject *folders;
     u_char inttable[CALLS_MAX];
     char * const* args;
 

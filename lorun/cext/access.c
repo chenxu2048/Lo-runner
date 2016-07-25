@@ -22,16 +22,15 @@
 #include <fcntl.h>
 #include <string.h>
 
-int fileAccess(PyObject *files, const char *file, long flags) {
+int findAndCheck(PyObject *obj, const char *str, long flags) {
+    if (!obj) return 0;
     PyObject *perm_obj;
     long perm;
-
-    if ((perm_obj = PyDict_GetItemString(files, file)) == NULL) {
+    if ((perm_obj = PyDict_GetItemString(obj, str)) == NULL) {
         return 0;
     }
-    //printf("%s:%d\n",file,flags);
-    // check if the value is a list
-    if (PyList_Check(perm_obj)) {
+
+    if (PyList_Check(perm_obj)) {   // check if the value is a list
         Py_ssize_t i, size = Py_SIZE(perm_obj);
         for (i = 0; i < size; ++i) {
             #ifdef IS_PY3
@@ -53,6 +52,37 @@ int fileAccess(PyObject *files, const char *file, long flags) {
     }
 
     return 0;
+}
+
+// support give a re_flag to a folder
+int folderAccess(PyObject *folders, const char *file, long flags) {
+    static char str_temp[100];
+    int i;
+    // initialize before using
+    memset(str_temp, 0, sizeof(str_temp));
+    size_t file_len = strlen(file);
+    // for a file name, for example, "/usr/lib/python3.5/xxx.py"
+    // the following location will be searched:
+    // "/usr/lib/python3.5/"
+    // "/usr/lib/"
+    // "/usr/"
+    // "/"
+    for (i = file_len - 1; i >= 0; --i) {
+        if (file[i] == '/') {
+            strncpy(str_temp, file, i + 1);
+            str_temp[i + 1] = '\0';
+            if (!findAndCheck(folders, str_temp, flags)) {
+                continue;
+            } else {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+int fileAccess(PyObject *files, const char *file, long flags) {
+    return findAndCheck(files, file, flags);
 }
 
 static long file_temp[100];
@@ -77,6 +107,11 @@ int checkAccess(struct Runobj *runobj, int pid, struct user_regs_struct *regs) {
                 }
             }
             l_cont: file_temp[99] = 0;
+
+            if (folderAccess(runobj->folders, (const char*)file_temp,
+                    REG_ARG_2(regs))) {
+                return ACCESS_OK;
+            }
 
             if (fileAccess(runobj->files, (const char*)file_temp,
                     REG_ARG_2(regs))) {
