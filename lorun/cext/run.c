@@ -27,17 +27,6 @@
 #include "access.h"
 #include "limit.h"
 
-/*
- * This function change unsigned long int pid_num into const string
- * @param unsigned long In This project is the pid of program
- * @return const string pid
- */
-const char* LongToString(unsigned long pid_num) {
-    static char ret_str[20];
-    memset(ret_str, 0, sizeof(ret_str));
-    sprintf(ret_str, "%lu", pid_num);
-    return (const char*)ret_str;
-}
 
 /*
  * replace ${PID} with the pid of program in runobj->files
@@ -50,7 +39,7 @@ void replaceFilePID(PyObject *files, pid_t pid) {
     pos = 0;
     while (PyDict_Next(files, &pos, &key, &value)) {
         t_key = PyUnicode_Replace(key, PyUnicode_FromString("${PID}"),
-                    PyUnicode_FromString(LongToString((unsigned long)pid)), -1);
+                    PyUnicode_FromFormat("%d", pid), -1);
         PyDict_SetItem(files, t_key, value);
         if (PyUnicode_Compare(t_key, key)) {
             PyDict_DelItem(files, key);
