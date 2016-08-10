@@ -108,12 +108,12 @@ int checkAccess(struct Runobj *runobj, int pid, struct user_regs_struct *regs) {
             }
             l_cont: file_temp[99] = 0;
 
-            if (folderAccess(runobj->folders, (const char*)file_temp,
+            if (fileAccess(runobj->files, (const char*)file_temp,
                     REG_ARG_2(regs))) {
                 return ACCESS_OK;
             }
 
-            if (fileAccess(runobj->files, (const char*)file_temp,
+            if (folderAccess(runobj->folders, (const char*)file_temp,
                     REG_ARG_2(regs))) {
                 return ACCESS_OK;
             }

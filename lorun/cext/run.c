@@ -27,6 +27,37 @@
 #include "access.h"
 #include "limit.h"
 
+/*
+ * This function change unsigned long int pid_num into const string
+ * @param unsigned long In This project is the pid of program
+ * @return const string pid
+ */
+const char* LongToString(unsigned long pid_num) {
+    static char ret_str[20];
+    memset(ret_str, 0, sizeof(ret_str));
+    sprintf(ret_str, "%lu", pid_num);
+    return (const char*)ret_str;
+}
+
+/*
+ * replace ${PID} with the pid of program in runobj->files
+ * @param PyObject* files
+ * @param pid_t pid, the pid of program which is trace
+ */
+void replaceFilePID(PyObject *files, pid_t pid) {
+    Py_ssize_t pos = 0;
+    PyObject *key = NULL, *value = NULL, *t_key;
+    pos = 0;
+    while (PyDict_Next(files, &pos, &key, &value)) {
+        t_key = PyUnicode_Replace(key, PyUnicode_FromString("${PID}"),
+                    PyUnicode_FromString(LongToString((unsigned long)pid)), -1);
+        PyDict_SetItem(files, t_key, value);
+        if (PyUnicode_Compare(t_key, key)) {
+            PyDict_DelItem(files, key);
+        }
+    }
+}
+
 const char *last_run_err;
 #define RAISE_RUN(err) {last_run_err = err;return -1;}
 
@@ -107,8 +138,8 @@ int traceLoop(struct Runobj *runobj, struct Result *rst, pid_t pid) {
 
         ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
     }
-    
-    
+
+
     rst->time_used = ru.ru_utime.tv_sec * 1000
             + ru.ru_utime.tv_usec / 1000
             + ru.ru_stime.tv_sec * 1000
@@ -182,6 +213,8 @@ int runit(struct Runobj *runobj, struct Result *rst) {
         RAISE1("run : vfork failure");
     }
 
+    if (pid != 0) replaceFilePID(runobj->files, pid);
+
     if (pid == 0) {
         close(fd_err[0]);
 
@@ -239,4 +272,3 @@ int runit(struct Runobj *runobj, struct Result *rst) {
         return 0;
     }
 }
-
