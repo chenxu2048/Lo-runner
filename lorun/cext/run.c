@@ -33,6 +33,7 @@
  * @param pid_t pid, the pid of program which is trace
  */
 void replaceFilePID(PyObject *files, pid_t pid) {
+  if (!files) return;
   Py_ssize_t pos = 0;
   PyObject *key = NULL, *value = NULL, *t_key;
   while (PyDict_Next(files, &pos, &key, &value)) {
@@ -192,8 +193,7 @@ int runit(struct Runobj *runobj, struct Result *rst) {
     RAISE1("run : vfork failure");
   }
 
-  if (pid > 0)
-    replaceFilePID(runobj->files, pid);
+  if (pid == 0) replaceFilePID(runobj->files, pid);
 
   if (pid == 0) {
     close(fd_err[0]);
